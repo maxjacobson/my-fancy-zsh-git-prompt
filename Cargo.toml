@@ -1,0 +1,6 @@
+[package]
+name = "my-fancy-zsh-git-prompt"
+version = "0.1.0"
+authors = ["Max Jacobson <max@hardscrabble.net>"]
+
+[dependencies]
