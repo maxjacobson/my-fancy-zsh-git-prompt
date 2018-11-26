@@ -3,7 +3,7 @@ extern crate git2;
 use std::env::current_dir;
 use std::path::PathBuf;
 
-use git2::{DiffOptions, Repository, RepositoryState};
+use git2::{Repository, RepositoryState};
 
 struct ZshOutput {
     is_bold: bool,
@@ -157,54 +157,27 @@ impl std::fmt::Display for ZshOutput {
 fn summarize(repository: &Repository) -> ZshOutput {
     match repository.state() {
         RepositoryState::Clean => match repository.head() {
-            Ok(head_reference) => match head_reference.target() {
-                Some(oid) => {
-                    let commit = repository.find_commit(oid).unwrap();
+            Ok(head_reference) => {
+                let mut is_branch = true;
 
-                    let head_tree = commit.tree().unwrap();
+                let branch_name = if head_reference.is_branch() {
+                    head_reference
+                        .shorthand()
+                        .unwrap_or_else(|| "(unknown branch)")
+                        .to_string()
+                } else {
+                    is_branch = false;
+                    format!("{}", head_reference.target().unwrap())
+                };
 
-                    let mut diff_options = DiffOptions::new();
-                    diff_options.include_untracked(true);
-
-                    let files_changed = repository
-                        .diff_tree_to_workdir(Some(&head_tree), Some(&mut diff_options))
-                        .unwrap()
-                        .stats()
-                        .unwrap()
-                        .files_changed();
-
-                    let mut is_branch = true;
-
-                    let branch_name = if head_reference.is_branch() {
-                        head_reference
-                            .shorthand()
-                            .unwrap_or_else(|| "(unknown branch)")
-                            .to_string()
-                    } else {
-                        is_branch = false;
-                        format!("{}", head_reference.target().unwrap())
-                    };
-
-                    if files_changed > 0 {
-                        let mut output = ZshOutput::new(&format!("{}*", &branch_name));
-                        output.set_color("red");
-                        output
-                    } else {
-                        let mut output = ZshOutput::new(&branch_name);
-                        if is_branch {
-                            output.set_color("green");
-                        } else {
-                            output.set_color("blue");
-                        }
-                        output
-                    }
+                let mut output = ZshOutput::new(&branch_name);
+                if is_branch {
+                    output.set_color("green");
+                } else {
+                    output.set_color("blue");
                 }
-                None => {
-                    let mut output = ZshOutput::new("(???)");
-                    output.set_color("red");
-                    output
-                }
-            },
+                output
+            }
             Err(_) => {
                 let mut output = ZshOutput::new("(no commits yet)");
                 output.set_color("yellow");
