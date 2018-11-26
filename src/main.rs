@@ -158,24 +158,17 @@ fn summarize(repository: &Repository) -> ZshOutput {
     match repository.state() {
         RepositoryState::Clean => match repository.head() {
             Ok(head_reference) => {
-                let mut is_branch = true;
-
                 let branch_name = if head_reference.is_branch() {
                     head_reference
                         .shorthand()
                         .unwrap_or_else(|| "(unknown branch)")
                         .to_string()
                 } else {
-                    is_branch = false;
                     format!("{}", head_reference.target().unwrap())
                 };
 
                 let mut output = ZshOutput::new(&branch_name);
-                if is_branch {
-                    output.set_color("green");
-                } else {
-                    output.set_color("blue");
-                }
+                output.set_color("blue");
                 output
             }
             Err(_) => {
