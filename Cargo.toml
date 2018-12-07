@@ -1,5 +1,6 @@
 [package]
 name = "my-fancy-zsh-git-prompt"
+edition = "2018"
 version = "0.1.0"
 authors = ["Max Jacobson <max@hardscrabble.net>"]
 
