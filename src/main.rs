@@ -1,7 +1,7 @@
 use std::env::current_dir;
 use std::path::PathBuf;
 
-use git2::{Repository, RepositoryState};
+use git2::{DescribeOptions, Repository, RepositoryState};
 
 struct ZshOutput {
     is_bold: bool,
@@ -162,7 +162,17 @@ fn summarize(repository: &Repository) -> ZshOutput {
                         .unwrap_or_else(|| "(unknown branch)")
                         .to_string()
                 } else {
-                    format!("{}", head_reference.target().unwrap())
+                    let mut describe_options = DescribeOptions::new();
+                    describe_options.describe_tags();
+                    describe_options.show_commit_oid_as_fallback(true);
+
+                    let describe = repository
+                        .describe(&describe_options)
+                        .unwrap()
+                        .format(None)
+                        .unwrap();
+
+                    format!("{}", describe)
                 };
 
                 let mut output = ZshOutput::new(&branch_name);
