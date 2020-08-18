@@ -155,9 +155,7 @@ impl std::fmt::Display for ZshOutput {
 fn any_files_changed(repository: &Repository) -> bool {
     repository
         .diff_index_to_workdir(None, None)
-        .and_then(|diff| diff.stats())
-        .and_then(|stats| Ok(stats.files_changed()))
-        .map_or(false, |count| count > 0)
+        .map_or(false, |diff| diff.deltas().next().is_some())
 }
 
 fn any_untracked_files(repository: &Repository) -> bool {
