@@ -160,6 +160,12 @@ fn any_files_changed(repository: &Repository) -> bool {
         .map_or(false, |count| count > 0)
 }
 
+fn any_untracked_files(repository: &Repository) -> bool {
+    repository.statuses(None).map_or(false, |statuses| {
+        statuses.iter().any(|entry| entry.status().is_wt_new())
+    })
+}
+
 fn summarize(repository: &Repository) -> ZshOutput {
     match repository.state() {
         RepositoryState::Clean => match repository.head() {
@@ -173,7 +179,7 @@ fn summarize(repository: &Repository) -> ZshOutput {
                     format!("{}", head_reference.target().unwrap())
                 };
 
-                if any_files_changed(repository) {
+                if any_files_changed(repository) || any_untracked_files(repository) {
                     let text = format!("{}*", &branch_name);
                     let mut output = ZshOutput::new(&text);
                     output.set_color("red");
