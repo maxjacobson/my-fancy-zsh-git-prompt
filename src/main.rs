@@ -152,6 +152,14 @@ impl std::fmt::Display for ZshOutput {
     }
 }
 
+fn any_files_changed(repository: &Repository) -> bool {
+    repository
+        .diff_index_to_workdir(None, None)
+        .and_then(|diff| diff.stats())
+        .and_then(|stats| Ok(stats.files_changed()))
+        .map_or(false, |count| count > 0)
+}
+
 fn summarize(repository: &Repository) -> ZshOutput {
     match repository.state() {
         RepositoryState::Clean => match repository.head() {
@@ -165,9 +173,16 @@ fn summarize(repository: &Repository) -> ZshOutput {
                     format!("{}", head_reference.target().unwrap())
                 };
 
-                let mut output = ZshOutput::new(&branch_name);
-                output.set_color("blue");
-                output
+                if any_files_changed(repository) {
+                    let text = format!("{}*", &branch_name);
+                    let mut output = ZshOutput::new(&text);
+                    output.set_color("red");
+                    output
+                } else {
+                    let mut output = ZshOutput::new(&branch_name);
+                    output.set_color("blue");
+                    output
+                }
             }
             Err(_) => {
                 let mut output = ZshOutput::new("(no commits yet)");
